@@ -26,13 +26,20 @@ class MainActivity : AppCompatActivity() {
             .build()
         val workRequest5 = OneTimeWorkRequest.Builder(AppWorker5::class.java)
             .build()
+        val periodicWorker = PeriodicWorkRequest.Builder(PeriodicWorker::class.java,15,TimeUnit.MINUTES).build()
 
-        val workManager = WorkManager.getInstance(this)
+        val workManager = WorkManager.getInstance(applicationContext)
         findViewById<Button>(R.id.buttonStart).setOnClickListener {
             workManager.beginWith(listOf(workRequest1,workRequest2,workRequest3)).then(workRequest4).then(workRequest5).enqueue()
         }
         findViewById<Button>(R.id.buttonStop).setOnClickListener{
             workManager.cancelWorkById(workRequest1.id)
+        }
+        findViewById<Button>(R.id.buttonPeriodicStart).setOnClickListener{
+            workManager.enqueue(periodicWorker)
+        }
+        findViewById<Button>(R.id.buttonPeriodicStop).setOnClickListener{
+            workManager.cancelWorkById(periodicWorker.id)
         }
     }
 }
