@@ -1,43 +1,60 @@
 package com.example.workmanager
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.work.ArrayCreatingInputMerger
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import java.util.Arrays
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val workRequest1 = OneTimeWorkRequest.Builder(AppWorker::class.java)
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),101
+        )
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
             .build()
-        val workRequest2 = OneTimeWorkRequest.Builder(AppWorker2::class.java)
+        val workRequest1 = OneTimeWorkRequest.Builder(AppWorker2::class.java)
+            .setConstraints(constraints)
+            .setInitialDelay(10000,TimeUnit.MILLISECONDS)
             .build()
-        val workRequest3 = OneTimeWorkRequest.Builder(AppWorker3::class.java)
+        val periodicWorker = PeriodicWorkRequest.Builder(AppWorker2::class.java,15,TimeUnit.MINUTES)
             .build()
-        val workRequest4 = OneTimeWorkRequest.Builder(AppWorker4::class.java)
-            .build()
-        val workRequest5 = OneTimeWorkRequest.Builder(AppWorker5::class.java)
-            .build()
-        val periodicWorker = PeriodicWorkRequest.Builder(PeriodicWorker::class.java,15,TimeUnit.MINUTES).build()
-
         val workManager = WorkManager.getInstance(applicationContext)
-        findViewById<Button>(R.id.buttonStart).setOnClickListener {
-            workManager.beginWith(listOf(workRequest1,workRequest2,workRequest3)).then(workRequest4).then(workRequest5).enqueue()
-        }
+
         findViewById<Button>(R.id.buttonStop).setOnClickListener{
-            workManager.cancelWorkById(workRequest1.id)
+            workManager.cancelAllWork()
         }
-        findViewById<Button>(R.id.buttonPeriodicStart).setOnClickListener{
-            workManager.enqueue(periodicWorker)
-        }
+        workManager.enqueueUniquePeriodicWork("My periodic Work",
+            ExistingPeriodicWorkPolicy.UPDATE,periodicWorker)
         findViewById<Button>(R.id.buttonPeriodicStop).setOnClickListener{
             workManager.cancelWorkById(periodicWorker.id)
         }

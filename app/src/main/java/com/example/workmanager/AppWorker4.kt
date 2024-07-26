@@ -8,6 +8,8 @@ class AppWorker4(context: Context, workerParameters: WorkerParameters):
     Worker(context,workerParameters) {
     override fun doWork(): Result {
         startWorkInBg()
+        val input = inputData.getStringArray("work")
+        println("all workers data : ${input.toString()}")
         return Result.success()
     }
     private fun startWorkInBg() {
